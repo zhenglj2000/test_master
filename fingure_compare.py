@@ -1,0 +1,118 @@
+import re
+import matplotlib.pyplot as plt
+import os
+
+segments = []#存放视频块时长序列
+def m3u8_parse(file_path):#处理原m3u8文件
+    with open(file_path, 'r') as f:
+        m3u8_content = f.read()
+
+    times = re.findall(r'#EXTINF:(.*),', m3u8_content)
+    length = re.findall(r'FILESIZE=(.*)', m3u8_content)
+    # print("m3u8时长", times)
+    print(file_path, length)
+    times = [float(segment) for segment in times]
+    length = [int(len) for len in length]
+    return times,length
+
+
+def m3u8_output_parse(file_path):#处理ffmpeg生成的m3u8文件
+    with open(file_path, 'r') as f:
+        m3u8_content = f.read()
+
+    times = re.findall(r'#EXTINF:(.*),', m3u8_content)
+    routes = re.findall(r'(.*)output.m3u8', file_path) #m3u8和ts列表的共同路径，类型：列表
+    #文件名列表
+    name_list = re.findall(r'(.*).ts', m3u8_content)
+    length = []
+    for name in name_list:
+        size = os.path.getsize(routes[0] + name + '.ts') # 文件完整路径
+        length.append(size)
+
+    # print(file_path, times)
+    print(file_path, length)
+    times = [float(segment) for segment in times]
+    return times,length
+
+
+
+#原m3u8文件
+times_540, length_540 = m3u8_parse("D:/N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG/Downloads/1/540p.m3u8")
+times_720, length_720 = m3u8_parse("D:/N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG/Downloads/1/720p.m3u8")
+#m3u8DL下载的视频
+times_540_, length_540_ = m3u8_output_parse("D:/N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG/Downloads/1/540_TS/output.m3u8")
+times_720_, length_720_ = m3u8_output_parse("D:/N_m3u8DL-CLI_v3.0.2_with_ffmpeg_and_SimpleG/Downloads/1/720_TS/output.m3u8")
+#IDM下载的视频
+times_540_1, length_540_1 = m3u8_output_parse("D:/IDM/Video/1/540_TS/output.m3u8")
+times_720_1, length_720_1 = m3u8_output_parse("D:/IDM/Video/1/720_TS/output.m3u8")
+
+#-----------------一、分片时长比较------------------
+#创建画布
+fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(10,8))
+fig.suptitle('分片时长比较')
+
+#子图1
+axes[0].set_title('山西美食540p')
+axes[0].set_xlabel("块号")
+axes[0].set_ylabel("分片时长")
+axes[0].axhline(10)
+x_value = range(len(times_540))
+axes[0].plot(x_value, times_540, linestyle='-', color='black', label='m3u8')
+x_value = range(len(times_540_))
+axes[0].plot(x_value, times_540_, linestyle='-', color='red', label='output_540')
+x_value = range(len(times_540_1))
+axes[0].plot(x_value, times_540_1, linestyle='--', color='blue', label='output_540_1')
+plt.legend()
+
+#子图2
+axes[1].set_title('山西美食720p')
+axes[1].set_xlabel("块号")
+axes[1].set_ylabel("分片时长")
+axes[1].axhline(10)
+x_value = range(len(times_720))
+axes[1].plot(x_value, times_720, linestyle='-', color='black', label='m3u8')
+x_value = range(len(times_720_))
+axes[1].plot(x_value, times_720_, linestyle='-', color='red', label='output_720')
+x_value = range(len(times_720_1))
+axes[1].plot(x_value, times_720_1, linestyle='--', color='blue', label='output_720_1')
+
+plt.legend()
+
+
+#调整子图之间的间距
+plt.tight_layout()
+plt.show()
+
+
+
+#------------------二、分片大小比较------------------------------
+fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(10,8))
+fig.suptitle('分片大小比较')
+
+#子图1
+axes[0].set_title('山西美食540p')
+axes[0].set_xlabel("块号")
+axes[0].set_ylabel("分片大小")
+x_value = range(len(length_540))
+axes[0].plot(x_value, length_540, linestyle='-', color='black', label='m3u8')
+x_value = range(len(length_540_))
+axes[0].plot(x_value, length_540_, linestyle='-', color='red', label='output_540')
+x_value= range(len(length_540_1))
+axes[0].plot(x_value, length_540_1, linestyle='--', color='blue', label='output_540_1')
+plt.legend()
+
+#子图2
+axes[1].set_title('山西美食720p')
+axes[1].set_xlabel("块号")
+axes[1].set_ylabel("分片大小")
+x_value = range(len(length_720))
+axes[1].plot(x_value, length_720, linestyle='-', color='black', label='m3u8')
+x_value = range(len(length_720_))
+axes[1].plot(x_value, length_720_, linestyle='-', color='red', label='output_720')
+x_value = range(len(length_720_1))
+axes[1].plot(x_value, length_720_1, linestyle='--', color='blue', label='output_720_1')
+plt.legend()
+#调整子图之间的间距
+plt.tight_layout()
+plt.show()
+
